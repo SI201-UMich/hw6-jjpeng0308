@@ -37,7 +37,11 @@ def load_json(filename):
         cannot be opened or is not valid JSON.
     """
     pass
-
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
 
 def create_cache(dictionary, filename):
     """
