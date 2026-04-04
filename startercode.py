@@ -149,7 +149,31 @@ def get_longest_lifespan_breed(cache_file):
         string "No breeds found" if no breed in the cache has a life.max value.
     """
     pass
-
+    cache = load_json(cache_file)
+    
+    longest_breed = None
+    max_lifespan = -1
+    
+    for url, data in cache.items():
+        try:
+            # Navigate to the life.max value
+            life_max = data['data']['attributes']['life']['max']
+            breed_name = data['data']['attributes']['name']
+            
+            # Check if life_max is an integer
+            if isinstance(life_max, int):
+                # Update if this breed has a longer lifespan, or same lifespan but comes first alphabetically
+                if life_max > max_lifespan or (life_max == max_lifespan and (longest_breed is None or breed_name < longest_breed)):
+                    max_lifespan = life_max
+                    longest_breed = breed_name
+        except (KeyError, TypeError):
+            # Skip breeds without valid life.max data
+            continue
+    
+    if longest_breed is None:
+        return "No breeds found"
+    
+    return (longest_breed, max_lifespan)
 
 def get_groups_above_cutoff(cutoff, cache_file):
     """
@@ -168,7 +192,28 @@ def get_groups_above_cutoff(cutoff, cache_file):
         A dictionary {group_uuid: count} for groups with count >= cutoff only.
     """
     pass
-
+    cache = load_json(cache_file)
+    
+    group_counts = {}
+    
+    for url, data in cache.items():
+        try:
+            # Navigate to the group ID
+            group_id = data['data']['relationships']['group']['data']['id']
+            
+            # Count this group
+            if group_id in group_counts:
+                group_counts[group_id] += 1
+            else:
+                group_counts[group_id] = 1
+        except (KeyError, TypeError):
+            # Skip breeds without valid group data
+            continue
+    
+    # Filter groups by cutoff
+    result = {group_id: count for group_id, count in group_counts.items() if count >= cutoff}
+    
+    return result
 
 # Extra Credit
 def recommend_breeds_in_same_group(breed_name, cache_file):
